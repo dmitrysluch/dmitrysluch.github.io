@@ -25,8 +25,10 @@ $(async function($){
             resolve(geometry);
         }, (progress)=>{}, (err)=>{reject(err)});
     }));
-
-    var texture = new THREE.TextureLoader().load( "./fire.jpg" );
+    let textureAddr = window.location.hash;
+    if (textureAddr == "") textureAddr = "#./fire.jpg";
+    textureAddr = textureAddr.slice(1);
+    var texture = new THREE.TextureLoader().load(textureAddr);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set( 4, 4 );
@@ -65,7 +67,7 @@ $(async function($){
     renderPass.renderToScreen = false;
     composer.addPass(renderPass);
     bloomPass = new THREE.UnrealBloomPass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 4, 0.25);
+        new THREE.Vector2(window.innerWidth, window.innerHeight), 4, 0.5, 0.25);
 bloomPass.renderToScreen = true;
 composer.addPass(bloomPass);
 
