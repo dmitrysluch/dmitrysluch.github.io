@@ -107,7 +107,7 @@ void main() {
         alpha += snoise(position1) / 2.0;
     }
 
-    gl_FragColor = vec4(texture2D(map, real_uv / 40.0).xyz, fract(alpha) - smoothstep(0.1, 1.3, v2_uv.y/40.0));
+    gl_FragColor = vec4(texture2D(map, real_uv / 40.0).xyz * (fract(alpha) - smoothstep(0.1, 1.3, v2_uv.y/40.0)), 1.0);
 }
 `;
 
@@ -122,3 +122,46 @@ void main() {
     gl_FragColor = texture2D(map, real_uv / 40.0);
 }
 `;
+
+pixelShaderVoronoy = (blue)=>(`
+varying vec3 v2_uv;
+varying vec2 real_uv;
+#define POINTS_SZ 8
+uniform vec2 u_points[POINTS_SZ];
+uniform vec3 u_normals[POINTS_SZ];
+uniform float uTime;
+uniform sampler2D map;
+void main() {
+  float min_distance = 1.0;
+  vec3 normal = vec3(0.0, 0.0, 0.0);
+  vec2 point = vec2(0.0, 0.0);
+  for (int i = 0; i < POINTS_SZ; i++) {
+      float current_distance = distance(v2_uv.xy, u_points[i]);
+      if (current_distance < min_distance) {
+          min_distance = current_distance;
+          normal = u_normals[i];
+          point = u_points[i];
+      }
+  }
+  vec2 up = normalize(normal.xy);
+
+  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);//texture2D(map, up * (v2_uv.y - point.y) + vec2(up.x, -up.y) * (v2_uv.x - point.x));
+  //gl_FragColor *= clamp(0.1, 1.0, dot(normalize(normal), vec3(0.0, 0.0, 1.0)));
+//   if (min_distance < 0.01) {
+//       gl_FragColor.rgb = vec3(1.0);
+//   }
+
+  int number_of_near_points = 0;
+
+  for (int i = 0; i < POINTS_SZ; i++) {
+      if (distance(v2_uv.xy, u_points[i]) < min_distance + 0.0015) {
+          number_of_near_points++;
+      }
+  }
+
+  if (number_of_near_points > 1) {
+      gl_FragColor = ${blue ? 'vec4(0.7 * sin(uTime) + 0.1 * cos(2.0 * uTime), 3.0 + 0.6 * sin(uTime), 0.2 * sin(3.0 * uTime), 1.0) * 0.6' : 'vec4(3.0 + 0.6 * sin(uTime), 0.7 * sin(uTime) + 0.1 * cos(2.0 * uTime), 0.2 * sin(3.0 * uTime), 1.0) * 0.6'};
+  }
+}
+
+`)
